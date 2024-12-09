@@ -1,0 +1,23 @@
+simulation:
+  # TODO Values must to be adjusted
+  target_load: 0.7
+  iterations: 5
+  duration: 1000
+
+  servers:
+    - name: Edge server
+      operations: 1.0
+      delay: 3
+      bandwidth: 14
+
+    - name: Cloud server
+      operations: 2.5
+      delay: 10
+      bandwidth: 8
+
+  generated_tasks:
+    data_size: [ 0.01, 10 ]
+    time_budget: [ 1, 1000 ]
+    required_computation: [ 1, 1000 ]
+    privacy_level: [ 1, 10 ]
+    
