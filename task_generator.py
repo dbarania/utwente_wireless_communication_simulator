@@ -17,9 +17,13 @@ class TaskGenerator:
 
     def new_task(self):
         data_size = random.randint(self.data_size_lower, self.data_size_upper)
+
         time_budget = random.randint(self.time_budget_lower, self.time_budget_upper)
+
         required_computation = random.randint(self.required_computation_lower, self.required_computation_upper)
+
         privacy = random.randint(self.privacy_lower, self.privacy_upper)
+
         return Task(data_size, privacy, required_computation, time_budget)
 
     @staticmethod
