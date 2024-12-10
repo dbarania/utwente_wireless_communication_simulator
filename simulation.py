@@ -2,15 +2,16 @@ import yaml
 from task import Task, TaskStatus
 from server import Server
 from task_generator import TaskGenerator
+from decision_making import decision_making_algorithm
 
 
 class Simulation:
 
     def __init__(self):
         self._time = 0
-        Server._time_function = self.time
-        Task._time_function = self.time
-        TaskGenerator._time_function = self.time
+        Server._time_function = self.sim_time
+        Task._time_function = self.sim_time
+        TaskGenerator._time_function = self.sim_time
         self.edge_server = None
         self.cloud_server = None
         self.other_servers = []
@@ -62,16 +63,40 @@ class Simulation:
         return current_system_load / target_system_load
 
     def reset_simulation(self):
-        # TODO implement by removing all tasks from everywhere
-        pass
+        assert isinstance(self.edge_server, Server)
+        assert isinstance(self.cloud_server, Server)
+        self.edge_server.active_tasks = []
+        self.cloud_server.active_tasks = []
+        self.all_tasks_list = []
+        self._time = 0
 
     def manage_tasks(self):
-        # TODO connect this with other module allowing to implement own algorithms
-        pass
+        assert isinstance(self.edge_server, Server)
+        assert isinstance(self.cloud_server, Server)
+        # Adjust this function call to your own algorithm
+        # Your function must return 2 lists of dictionaries in
+        # {"task": Task_obj, "bandwidth_allocated": bw, "cpu_allocated":cpu} format and
+        # a list of Task objects that aren't decided in this timeslot.
+        # In case of no new tasks, lists can be empty
+
+        edge_tasks, cloud_tasks, undecided_tasks = decision_making_algorithm()
+        for task_specs in edge_tasks:
+            task = task_specs["task"]
+            bw = task_specs["bandwidth_allocated"]
+            cpu = task_specs["cpu_allocated"]
+            self.edge_server.load_task(task, bw, cpu)
+
+        for task_specs in cloud_tasks:
+            task = task_specs["task"]
+            bw = task_specs["bandwidth_allocated"]
+            cpu = task_specs["cpu_allocated"]
+            self.cloud_server.load_task(task, bw, cpu)
+
+        # TODO handle somehow undecided tasks
 
     def run(self):
-        # TODO deal with this coeff
-        tunable_coefficient = 2 / 3
+        # # deal with this coeff
+        # tunable_coefficient = 4 / 5
         assert isinstance(self.task_generator, TaskGenerator)
         assert isinstance(self.edge_server, Server)
         assert isinstance(self.cloud_server, Server)
@@ -79,15 +104,16 @@ class Simulation:
         for iteration in range(self.iterations):
             for time_slot in range(self.duration):
 
-                while self._get_system_load() < tunable_coefficient * self.target_system_load:
+                # while self._get_system_load() < tunable_coefficient * self.target_system_load:
+                while self._get_system_load() < self.target_system_load:
                     new_task = self.task_generator.new_task()
                     self.all_tasks_list.append(new_task)
 
                 self.manage_tasks()
                 self.edge_server.update_tasks()
                 self.cloud_server.update_tasks()
+                self._time += 1
             self.reset_simulation()
 
-    @property
-    def time(self):
-        return self.time
+    def sim_time(self):
+        return self._time

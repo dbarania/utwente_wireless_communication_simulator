@@ -12,10 +12,10 @@ class Server:
         self.active_tasks = []
 
     def load_task(self, task: Task, bandwidth_allocated: int, computation_allocated: int):
-        # TODO Maybe this should be a tuple
         self.active_tasks.append((task, bandwidth_allocated, computation_allocated))
         task.arrival_time = self._time() + self.delay
         task.status = TaskStatus.SENDING
+        task.server_responsible = self
 
     def update_tasks(self):
         for task, bandwidth, computation in self.active_tasks:
@@ -32,6 +32,7 @@ class Server:
                     task.update_computation_required(computation)
                     if task.computation_required == 0:
                         task.status = TaskStatus.FINISHED
+        self._handle_finished_tasks()
 
     def _handle_finished_tasks(self):
         self.active_tasks = [(t, bw, cmp) for (t, bw, cmp) in self.active_tasks
@@ -39,7 +40,10 @@ class Server:
 
     def _process_finished_tasks(self, task, bandwidth, cpu):
         # TODO implement something
-        pass
+        print(task)
+        print(bandwidth)
+        print(cpu)
+        return True
 
     @staticmethod
     def from_dict(server_config: dict):

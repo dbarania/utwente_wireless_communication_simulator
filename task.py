@@ -20,12 +20,19 @@ class Task:
         self.computation_required = computation_required
         self.deadline = self._time() + time_budget
         self.arrival_time = None  # arrival of first packets at the server
+        self._overdue = False
+        self.server_responsible = None
 
     def update_data_to_send(self, bandwidth_allocated: int) -> None:
         self.data_to_send = max(0, self.data_to_send - bandwidth_allocated)
 
     def update_computation_required(self, cpu_allocated) -> None:
         self.computation_required = max(0, self.computation_required - cpu_allocated)
+
+    @property
+    def overdue(self):
+        self._overdue = self._time() > self.deadline and self.status != TaskStatus.FINISHED
+        return self._overdue
 
     @staticmethod
     def _assign_id() -> int:
