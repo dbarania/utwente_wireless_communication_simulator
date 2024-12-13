@@ -46,10 +46,19 @@ class Task:
                     self.status = TaskStatus.FINISHED
 
     def update_cpu(self, cpu: int):
-        self.cpu_allocated = cpu
+        if cpu > 0:
+            self.cpu_allocated = cpu
+        else:
+            raise ValueError("Cannot allocate 0 operations in a cycle to the task")
 
     def update_bandwidth(self, bandwidth: int):
-        self.bandwidth_allocated = bandwidth
+        if bandwidth > 0:
+            self.bandwidth_allocated = bandwidth
+        else:
+            raise ValueError("Cannot allocate 0 bandwidth in a cycle to the task")
+
+    def update_server(self, server):
+        self.server_responsible = server
 
     def _update_data_to_send(self) -> None:
         self.data_to_send = max(0, self.data_to_send - self.bandwidth_allocated)

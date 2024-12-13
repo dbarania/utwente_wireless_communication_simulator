@@ -34,9 +34,18 @@ class Server:
                                 if not t.status == TaskStatus.FINISHED and self._process_finished_tasks(t)]
 
     def _process_finished_tasks(self, task):
-        # TODO implement something
         print(task)
+        # TODO do some processing
         return True
+
+    @property
+    def cpu_allocated(self):
+        return sum(t.computation_required for t in
+                   [*self.computing_tasks, *self.transferring_tasks])
+
+    def sum_privacy(self):
+        return sum(t.privacy_lvl for t in
+                   [*self.computing_tasks, *self.transferring_tasks])
 
     @staticmethod
     def from_dict(server_config: dict):

@@ -4,7 +4,7 @@ from task import Task, TaskStatus
 class Hub:
     def __init__(self, bandwidth: int):
         self.bandwidth_limit = bandwidth
-        self.bandwidth_allocated = 0
+        self._bandwidth_allocated = 0
         self.undecided_tasks_list = []
         self.transferred_tasks_list = []
 
@@ -19,6 +19,13 @@ class Hub:
             if t.status == TaskStatus.COMPUTING:
                 t.server_responsible.load_task(t)
 
+    @property
+    def bandwidth_allocated(self):
+        return sum(t.bandwidth_allocated for t in self.transferred_tasks_list)
+
+    def workload_remaining(self):
+        return sum(t.computation_required for t in self.undecided_tasks_list)
+
     def _move_tasks_to_transferred(self):
         for t in self.undecided_tasks_list:
             if t.server_responsible is not None:
@@ -27,6 +34,6 @@ class Hub:
         self.undecided_tasks_list = [t for t in self.undecided_tasks_list if t.server_responsible is None]
 
     def reset(self):
-        self.bandwidth_allocated = 0
+        self._bandwidth_allocated = 0
         self.undecided_tasks_list.clear()
         self.transferred_tasks_list.clear()

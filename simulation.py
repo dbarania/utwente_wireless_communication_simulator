@@ -1,9 +1,12 @@
+from difflib import restore
+
 import yaml
 from task import Task, TaskStatus
 from server import Server
 from task_generator import TaskGenerator
 from decision_making import decision_making_algorithm
 from hub import Hub
+from statistics_manager import SystemStateTimestamp, StatisticsManager
 
 
 class Simulation:
@@ -13,7 +16,7 @@ class Simulation:
         Server._time_function = self.sim_time
         Task._time_function = self.sim_time
         TaskGenerator._time_function = self.sim_time
-
+        self.statistics_manager = None
         self.task_generator = None
         self.iot_hub = None
         self.edge_server = None
@@ -41,10 +44,9 @@ class Simulation:
         self.iterations = simulation_config[iterations]
         self.duration = simulation_config[duration]
         self.iot_hub = Hub(simulation_config[bandwidth])
+        self.statistics_manager = StatisticsManager(iterations)
 
     def run(self):
-        # # deal with this coeff
-        # tunable_coefficient = 4 / 5
         assert isinstance(self.task_generator, TaskGenerator)
         assert isinstance(self.edge_server, Server)
         assert isinstance(self.cloud_server, Server)
@@ -52,20 +54,19 @@ class Simulation:
 
         for iteration in range(self.iterations):
             for time_slot in range(self.duration):
-
-                # while self._get_system_load() < tunable_coefficient * self.target_system_load:
+                new_tasks = 0
                 while self._get_system_load() < self.target_system_load:
                     new_task = self.task_generator.new_task()
                     self.iot_hub.add_new_task(new_task)
+                    new_tasks += 1
 
                 self.manage_tasks()
                 self.update_tasks()
+                self._update_statistics(new_tasks)
                 self._time += 1
             self.reset_simulation()
 
     def manage_tasks(self):
-        # TODO do something useful with this, mostly rewrite this function
-        # This function should only update values of tasks attributes like server, bw and cpu
         assert isinstance(self.edge_server, Server)
         assert isinstance(self.cloud_server, Server)
         assert isinstance(self.iot_hub, Hub)
@@ -75,9 +76,31 @@ class Simulation:
         edge_server = self.edge_server
         cloud_server = self.cloud_server
 
-        decision_making_algorithm()
+        tasks_to_decide = hub.undecided_tasks_list
+        bw_allocated = hub.bandwidth_allocated
+        bw_limit = hub.bandwidth_limit
+        edge_cpu_allocated = edge_server.cpu_allocated
+        edge_cpu_limit = edge_server.operations_limit
+        edge_delay = edge_server.delay
+        cloud_cpu_allocated = cloud_server.cpu_allocated
+        cloud_cpu_limit = cloud_server.operations_limit
+        cloud_delay = cloud_server.delay
 
-    #     Algo needs to output something, probably move tasks within a hub and maybe update their fields
+        # result should be a list of dictionaries where dictionary represents decision made for a task
+        # single element of result list:
+        # {"task": task,
+        # "server": "cloud" | "edge",
+        # "bandwidth": bandwidth_to_allocate_to_task,
+        # "cpu": cpu_operations_in_time_unit_to_allocate}
+        result = decision_making_algorithm(tasks_to_decide, bw_allocated, bw_limit, edge_cpu_allocated, edge_cpu_limit,
+                                           edge_delay, cloud_cpu_allocated, cloud_cpu_limit, cloud_delay)
+
+        for record in result:
+            task, bandwidth, cpu = record["task"], record["bandwidth"], record["cpu"]
+            server = self.edge_server if record["server"] == "edge" else self.cloud_server
+            assert isinstance(task, Task)
+            task.update_cpu(cpu)
+            task.update_bandwidth(bandwidth)
 
     def update_tasks(self):
         assert isinstance(self.edge_server, Server)
@@ -86,6 +109,8 @@ class Simulation:
         self.edge_server.update()
         self.cloud_server.update()
         self.iot_hub.update()
+
+    #     Algo needs to output something, probably move tasks within a hub and maybe update their fields
 
     def reset_simulation(self):
         assert isinstance(self.edge_server, Server)
@@ -99,14 +124,36 @@ class Simulation:
     def sim_time(self):
         return self._time
 
+    def _update_statistics(self, new_tasks_num):
+        assert isinstance(self.edge_server, Server)
+        assert isinstance(self.cloud_server, Server)
+        assert isinstance(self.iot_hub, Hub)
+        assert isinstance(self.statistics_manager, StatisticsManager)
+        new_tasks = new_tasks_num
+        tasks_transferring_edge = len(self.edge_server.transferring_tasks)
+        tasks_transferring_cloud = len(self.cloud_server.transferring_tasks)
+        tasks_computing_edge = len(self.edge_server.computing_tasks)
+        tasks_computing_cloud = len(self.cloud_server.computing_tasks)
+        bandwidth_usage = self.iot_hub.bandwidth_allocated
+        cpu_usage_edge = self.edge_server.cpu_allocated
+        cpu_usage_cloud = self.cloud_server.cpu_allocated
+        privacy_edge = self.edge_server.sum_privacy()
+        privacy_cloud = self.cloud_server.sum_privacy()
+        self.statistics_manager.state_of_system[self.sim_time()].update_statistics(new_tasks, tasks_transferring_edge,
+                                                                                   tasks_transferring_cloud,
+                                                                                   tasks_computing_edge,
+                                                                                   tasks_computing_cloud,
+                                                                                   bandwidth_usage, cpu_usage_edge,
+                                                                                   cpu_usage_cloud, privacy_edge,
+                                                                                   privacy_cloud)
+
     def _get_system_load(self):
         assert isinstance(self.edge_server, Server)
         assert isinstance(self.cloud_server, Server)
         assert isinstance(self.iot_hub, Hub)
-        return sum(t.computation_required for t in
-                   [*self.iot_hub.undecided_tasks_list,
-                    *self.edge_server.computing_tasks,
-                    *self.cloud_server.computing_tasks])
+        return (self.iot_hub.workload_remaining() +
+                self.edge_server.cpu_allocated +
+                self.cloud_server.cpu_allocated)
 
     def _create_servers(self, servers_config: list):
         for server_info in servers_config:
