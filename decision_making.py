@@ -5,6 +5,7 @@ from task import Task
 
 
 def decision_making_algorithm(
+        time: int,
         tasks_to_handle: list,
         bandwidth_occupied: int,
         bandwidth_limit: int,

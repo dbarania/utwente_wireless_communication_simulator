@@ -1,5 +1,4 @@
-from difflib import restore
-
+from enum import Enum
 import yaml
 from task import Task, TaskStatus
 from server import Server
@@ -7,6 +6,12 @@ from task_generator import TaskGenerator
 from decision_making import decision_making_algorithm
 from hub import Hub
 from statistics_manager import SystemStateTimestamp, StatisticsManager
+
+
+class DecisionMakingAlgorithm(Enum):
+    CUSTOM = 0
+    EVERYTHING_EDGE = 1
+    EVERYTHING_CLOUD = 2
 
 
 class Simulation:
@@ -22,11 +27,12 @@ class Simulation:
         self.edge_server = None
         self.cloud_server = None
 
+        self.algorithm_used = None
         self.target_system_load = None
         self.iterations = None
         self.duration = None
 
-    def setup_simulation(self, conf_file_path: str):
+    def setup_simulation(self, conf_file_path: str, algorithm_mode: DecisionMakingAlgorithm):
         target_load = "target_load"
         iterations = "iterations"
         duration = "duration"
@@ -45,6 +51,7 @@ class Simulation:
         self.duration = simulation_config[duration]
         self.iot_hub = Hub(simulation_config[bandwidth])
         self.statistics_manager = StatisticsManager(iterations)
+        self.algorithm_used = algorithm_mode
 
     def run(self):
         assert isinstance(self.task_generator, TaskGenerator)
@@ -71,6 +78,8 @@ class Simulation:
         assert isinstance(self.cloud_server, Server)
         assert isinstance(self.iot_hub, Hub)
 
+        result = []
+
         # Probably useful data
         hub = self.iot_hub
         edge_server = self.edge_server
@@ -92,8 +101,14 @@ class Simulation:
         # "server": "cloud" | "edge",
         # "bandwidth": bandwidth_to_allocate_to_task,
         # "cpu": cpu_operations_in_time_unit_to_allocate}
-        result = decision_making_algorithm(tasks_to_decide, bw_allocated, bw_limit, edge_cpu_allocated, edge_cpu_limit,
-                                           edge_delay, cloud_cpu_allocated, cloud_cpu_limit, cloud_delay)
+        if self.algorithm_used == DecisionMakingAlgorithm.CUSTOM:
+            result = decision_making_algorithm(self.sim_time(), tasks_to_decide, bw_allocated, bw_limit, edge_cpu_allocated,
+                                               edge_cpu_limit,
+                                               edge_delay, cloud_cpu_allocated, cloud_cpu_limit, cloud_delay)
+        elif self.algorithm_used == DecisionMakingAlgorithm.EVERYTHING_EDGE:
+            pass
+        elif self.algorithm_used == DecisionMakingAlgorithm.EVERYTHING_CLOUD:
+            pass
 
         for record in result:
             task, bandwidth, cpu = record["task"], record["bandwidth"], record["cpu"]
@@ -101,6 +116,7 @@ class Simulation:
             assert isinstance(task, Task)
             task.update_cpu(cpu)
             task.update_bandwidth(bandwidth)
+            task.update_server(server)
 
     def update_tasks(self):
         assert isinstance(self.edge_server, Server)
@@ -109,8 +125,6 @@ class Simulation:
         self.edge_server.update()
         self.cloud_server.update()
         self.iot_hub.update()
-
-    #     Algo needs to output something, probably move tasks within a hub and maybe update their fields
 
     def reset_simulation(self):
         assert isinstance(self.edge_server, Server)
