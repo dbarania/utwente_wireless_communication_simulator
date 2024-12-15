@@ -18,6 +18,7 @@ class Hub:
             t.update_task()
             if t.status == TaskStatus.COMPUTING:
                 t.server_responsible.load_task(t)
+                self.transferred_tasks_list.remove(t)
 
     @property
     def bandwidth_allocated(self):

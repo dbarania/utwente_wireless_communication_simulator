@@ -125,15 +125,15 @@ class Simulation:
                                                                cloud_delay)
         elif self.algorithm_used == DecisionMakingAlgorithm.EVERYTHING_CLOUD:
             result = decision_making.cloud_everything_algorithm(self.sim_time(),
-                                                               tasks_to_decide,
-                                                               bw_allocated,
-                                                               bw_limit,
-                                                               edge_cpu_allocated,
-                                                               edge_cpu_limit,
-                                                               edge_delay,
-                                                               cloud_cpu_allocated,
-                                                               cloud_cpu_limit,
-                                                               cloud_delay)
+                                                                tasks_to_decide,
+                                                                bw_allocated,
+                                                                bw_limit,
+                                                                edge_cpu_allocated,
+                                                                edge_cpu_limit,
+                                                                edge_delay,
+                                                                cloud_cpu_allocated,
+                                                                cloud_cpu_limit,
+                                                                cloud_delay)
 
         for record in result:
             task, bandwidth, cpu = record["task"], record["bandwidth"], record["cpu"]
@@ -192,8 +192,8 @@ class Simulation:
         assert isinstance(self.cloud_server, Server)
         assert isinstance(self.iot_hub, Hub)
         return (self.iot_hub.workload_remaining() +
-                self.edge_server.cpu_allocated +
-                self.cloud_server.cpu_allocated)
+                self.edge_server.get_workload +
+                self.cloud_server.get_workload)
 
     def _create_servers(self, servers_config: list):
         for server_info in servers_config:

@@ -40,6 +40,11 @@ class Server:
 
     @property
     def cpu_allocated(self):
+        return sum(t.cpu_allocated for t in
+                   [*self.computing_tasks, *self.transferring_tasks])
+
+    @property
+    def get_workload(self):
         return sum(t.computation_required for t in
                    [*self.computing_tasks, *self.transferring_tasks])
 

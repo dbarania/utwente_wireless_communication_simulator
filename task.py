@@ -33,7 +33,7 @@ class Task:
         self.server_responsible = None
 
     def __repr__(self):
-        return (f"Data to send: {self.data_to_send}, computations: {self.computation_left},"
+        return (f"Id {self.id},  data to send: {self.data_to_send}, computations: {self.computation_left},"
                 f" time left: {self.deadline - self._time()}")
 
     def update_task(self):
