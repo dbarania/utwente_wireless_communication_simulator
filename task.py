@@ -32,6 +32,10 @@ class Task:
         self.arrival_time = None
         self.server_responsible = None
 
+    def __repr__(self):
+        return (f"Data to send: {self.data_to_send}, computations: {self.computation_left},"
+                f" time left: {self.deadline - self._time()}")
+
     def update_task(self):
         if self.status == TaskStatus.WAITING:
             pass
@@ -65,6 +69,11 @@ class Task:
 
     def _update_computation_left(self) -> None:
         self.computation_left = max(0, self.computation_left - self.cpu_allocated)
+
+    def check_task_feasibility(self, bandwidth: int, server_delay: int, cpu: int):
+        return (self.deadline - self._time() >= self.data_size / bandwidth +
+                server_delay +
+                self.computation_required / cpu)
 
     @property
     def overdue(self):

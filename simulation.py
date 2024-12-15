@@ -3,7 +3,7 @@ import yaml
 from task import Task, TaskStatus
 from server import Server
 from task_generator import TaskGenerator
-from decision_making import decision_making_algorithm
+import decision_making
 from hub import Hub
 from statistics_manager import SystemStateTimestamp, StatisticsManager
 
@@ -50,7 +50,7 @@ class Simulation:
         self.iterations = simulation_config[iterations]
         self.duration = simulation_config[duration]
         self.iot_hub = Hub(simulation_config[bandwidth])
-        self.statistics_manager = StatisticsManager(iterations)
+        self.statistics_manager = StatisticsManager(self.duration)
         self.algorithm_used = algorithm_mode
 
     def run(self):
@@ -85,7 +85,7 @@ class Simulation:
         edge_server = self.edge_server
         cloud_server = self.cloud_server
 
-        tasks_to_decide = hub.undecided_tasks_list
+        tasks_to_decide = hub.undecided_tasks_list[:]
         bw_allocated = hub.bandwidth_allocated
         bw_limit = hub.bandwidth_limit
         edge_cpu_allocated = edge_server.cpu_allocated
@@ -102,13 +102,38 @@ class Simulation:
         # "bandwidth": bandwidth_to_allocate_to_task,
         # "cpu": cpu_operations_in_time_unit_to_allocate}
         if self.algorithm_used == DecisionMakingAlgorithm.CUSTOM:
-            result = decision_making_algorithm(self.sim_time(), tasks_to_decide, bw_allocated, bw_limit, edge_cpu_allocated,
-                                               edge_cpu_limit,
-                                               edge_delay, cloud_cpu_allocated, cloud_cpu_limit, cloud_delay)
+            result = decision_making.decision_making_algorithm(self.sim_time(),
+                                                               tasks_to_decide,
+                                                               bw_allocated,
+                                                               bw_limit,
+                                                               edge_cpu_allocated,
+                                                               edge_cpu_limit,
+                                                               edge_delay,
+                                                               cloud_cpu_allocated,
+                                                               cloud_cpu_limit,
+                                                               cloud_delay)
         elif self.algorithm_used == DecisionMakingAlgorithm.EVERYTHING_EDGE:
-            pass
+            result = decision_making.edge_everything_algorithm(self.sim_time(),
+                                                               tasks_to_decide,
+                                                               bw_allocated,
+                                                               bw_limit,
+                                                               edge_cpu_allocated,
+                                                               edge_cpu_limit,
+                                                               edge_delay,
+                                                               cloud_cpu_allocated,
+                                                               cloud_cpu_limit,
+                                                               cloud_delay)
         elif self.algorithm_used == DecisionMakingAlgorithm.EVERYTHING_CLOUD:
-            pass
+            result = decision_making.cloud_everything_algorithm(self.sim_time(),
+                                                               tasks_to_decide,
+                                                               bw_allocated,
+                                                               bw_limit,
+                                                               edge_cpu_allocated,
+                                                               edge_cpu_limit,
+                                                               edge_delay,
+                                                               cloud_cpu_allocated,
+                                                               cloud_cpu_limit,
+                                                               cloud_delay)
 
         for record in result:
             task, bandwidth, cpu = record["task"], record["bandwidth"], record["cpu"]
@@ -117,6 +142,7 @@ class Simulation:
             task.update_cpu(cpu)
             task.update_bandwidth(bandwidth)
             task.update_server(server)
+            task.status = TaskStatus.SENDING
 
     def update_tasks(self):
         assert isinstance(self.edge_server, Server)

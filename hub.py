@@ -30,7 +30,7 @@ class Hub:
         for t in self.undecided_tasks_list:
             if t.server_responsible is not None:
                 self.transferred_tasks_list.append(t)
-                t.server_responsible.transferring_tasks.add_transferring_task(t)
+                t.server_responsible.add_transferring_task(t)
         self.undecided_tasks_list = [t for t in self.undecided_tasks_list if t.server_responsible is None]
 
     def reset(self):
