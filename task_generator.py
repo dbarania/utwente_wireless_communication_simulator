@@ -1,11 +1,15 @@
 import random
 from task import Task
 
+SEED = 42
+
 
 class TaskGenerator:
     _time_function = None
 
     def __init__(self, data_sizes: list, time_budgets: list, required_computations: list, privacy: list):
+        self._rng = random.Random()
+        self._rng.seed(SEED)
         self.data_size_lower = min(data_sizes)
         self.data_size_upper = max(data_sizes)
         self.time_budget_lower = min(time_budgets)
@@ -16,13 +20,13 @@ class TaskGenerator:
         self.privacy_upper = max(privacy)
 
     def new_task(self):
-        data_size = random.randint(self.data_size_lower, self.data_size_upper)
+        data_size = self._rng.randint(self.data_size_lower, self.data_size_upper)
 
-        time_budget = random.randint(self.time_budget_lower, self.time_budget_upper)
+        time_budget = self._rng.randint(self.time_budget_lower, self.time_budget_upper)
 
-        required_computation = random.randint(self.required_computation_lower, self.required_computation_upper)
+        required_computation = self._rng.randint(self.required_computation_lower, self.required_computation_upper)
 
-        privacy = random.randint(self.privacy_lower, self.privacy_upper)
+        privacy = self._rng.randint(self.privacy_lower, self.privacy_upper)
 
         return Task(data_size, privacy, required_computation, time_budget)
 

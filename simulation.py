@@ -51,6 +51,7 @@ class Simulation:
         self.duration = simulation_config[duration]
         self.iot_hub = Hub(simulation_config[bandwidth])
         self.statistics_manager = StatisticsManager(self.duration)
+        self.statistics_manager.simulation_to_track = self
         self.algorithm_used = algorithm_mode
 
     def run(self):
@@ -58,6 +59,7 @@ class Simulation:
         assert isinstance(self.edge_server, Server)
         assert isinstance(self.cloud_server, Server)
         assert isinstance(self.iot_hub, Hub)
+        assert isinstance(self.statistics_manager, StatisticsManager)
 
         for iteration in range(self.iterations):
             for time_slot in range(self.duration):
@@ -71,6 +73,7 @@ class Simulation:
                 self.update_tasks()
                 self._update_statistics(new_tasks)
                 self._time += 1
+            self.statistics_manager.generate_logs(f'log_{str(self.algorithm_used).split(".")[1].lower()}_{iteration}.csv')
             self.reset_simulation()
 
     def manage_tasks(self):
@@ -101,39 +104,45 @@ class Simulation:
         # "server": "cloud" | "edge",
         # "bandwidth": bandwidth_to_allocate_to_task,
         # "cpu": cpu_operations_in_time_unit_to_allocate}
+        if (not tasks_to_decide) or bw_limit - bw_allocated == 0:
+            return
+
         if self.algorithm_used == DecisionMakingAlgorithm.CUSTOM:
-            result = decision_making.decision_making_algorithm(self.sim_time(),
-                                                               tasks_to_decide,
-                                                               bw_allocated,
-                                                               bw_limit,
-                                                               edge_cpu_allocated,
-                                                               edge_cpu_limit,
-                                                               edge_delay,
-                                                               cloud_cpu_allocated,
-                                                               cloud_cpu_limit,
-                                                               cloud_delay)
+            result = decision_making.decision_making_algorithm(
+                self.sim_time(),
+                tasks_to_decide,
+                bw_allocated,
+                bw_limit,
+                edge_cpu_allocated,
+                edge_cpu_limit,
+                edge_delay,
+                cloud_cpu_allocated,
+                cloud_cpu_limit,
+                cloud_delay)
         elif self.algorithm_used == DecisionMakingAlgorithm.EVERYTHING_EDGE:
-            result = decision_making.edge_everything_algorithm(self.sim_time(),
-                                                               tasks_to_decide,
-                                                               bw_allocated,
-                                                               bw_limit,
-                                                               edge_cpu_allocated,
-                                                               edge_cpu_limit,
-                                                               edge_delay,
-                                                               cloud_cpu_allocated,
-                                                               cloud_cpu_limit,
-                                                               cloud_delay)
+            result = decision_making.edge_everything_algorithm(
+                self.sim_time(),
+                tasks_to_decide,
+                bw_allocated,
+                bw_limit,
+                edge_cpu_allocated,
+                edge_cpu_limit,
+                edge_delay,
+                cloud_cpu_allocated,
+                cloud_cpu_limit,
+                cloud_delay)
         elif self.algorithm_used == DecisionMakingAlgorithm.EVERYTHING_CLOUD:
-            result = decision_making.cloud_everything_algorithm(self.sim_time(),
-                                                                tasks_to_decide,
-                                                                bw_allocated,
-                                                                bw_limit,
-                                                                edge_cpu_allocated,
-                                                                edge_cpu_limit,
-                                                                edge_delay,
-                                                                cloud_cpu_allocated,
-                                                                cloud_cpu_limit,
-                                                                cloud_delay)
+            result = decision_making.cloud_everything_algorithm(
+                self.sim_time(),
+                tasks_to_decide,
+                bw_allocated,
+                bw_limit,
+                edge_cpu_allocated,
+                edge_cpu_limit,
+                edge_delay,
+                cloud_cpu_allocated,
+                cloud_cpu_limit,
+                cloud_delay)
 
         for record in result:
             task, bandwidth, cpu = record["task"], record["bandwidth"], record["cpu"]

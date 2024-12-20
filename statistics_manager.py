@@ -37,6 +37,24 @@ class SystemStateTimestamp:
         self.privacy_edge = privacy_edge
         self.privacy_cloud = privacy_cloud
 
+    def generate_header(self):
+        a = self.__dict__.keys()
+        return ','.join(a) + '\n'
+
+    def generate_entry(self):
+        return (f'{self.timestamp},'
+                f' {self.new_tasks},'
+                f' {self.tasks_transferring_edge},'
+                f' {self.tasks_transferring_cloud},'
+                f' {self.tasks_computing_edge},'
+                f' {self.tasks_computing_cloud},'
+                f' {self.bandwidth_usage},'
+                f' {self.cpu_usage_edge},'
+                f' {self.cpu_usage_cloud},'
+                f' {self.privacy_edge},'
+                f' {self.privacy_cloud}'
+                f'\n')
+
 
 class StatisticsManager:
     def __init__(self, num_iterations):
@@ -44,3 +62,11 @@ class StatisticsManager:
         self.finished_tasks = []
         self.simulation_to_track = None
         self.state_of_system = [SystemStateTimestamp() for _ in range(num_iterations)]
+
+    def generate_logs(self, log_name: str):
+        with open(log_name, 'w') as log_file:
+            for timestamp in self.state_of_system:
+                if timestamp.timestamp == 0:
+                    log_file.write(timestamp.generate_header())
+                entry = timestamp.generate_entry()
+                log_file.write(entry)

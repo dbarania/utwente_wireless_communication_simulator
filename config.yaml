@@ -1,8 +1,8 @@
 simulation:
 
-  target_load: 1.5
+  target_load: 20
   iterations: 1
-  duration: 1500
+  duration: 500
   bandwidth: 200
   servers:
     - name: Edge server
@@ -14,8 +14,8 @@ simulation:
       delay: 15
 
   generated_tasks:
-    data_size: [ 10, 250 ]
-    time_budget: [ 20, 50 ]
-    required_computation: [ 50, 500 ]
+    data_size: [ 10, 400 ]
+    time_budget: [ 30, 100 ]
+    required_computation: [ 50, 800 ]
     privacy_level: [ 1, 10 ]
     

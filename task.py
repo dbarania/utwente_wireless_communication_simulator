@@ -37,6 +37,8 @@ class Task:
                 f" time left: {self.deadline - self._time()}")
 
     def update_task(self):
+        if self.overdue:
+            print(f"{self._time()}  {self.id} is overdue")
         if self.status == TaskStatus.WAITING:
             pass
         elif self.status == TaskStatus.SENDING:
@@ -71,9 +73,13 @@ class Task:
         self.computation_left = max(0, self.computation_left - self.cpu_allocated)
 
     def check_task_feasibility(self, bandwidth: int, server_delay: int, cpu: int):
-        return (self.deadline - self._time() >= self.data_size / bandwidth +
-                server_delay +
-                self.computation_required / cpu)
+        return bandwidth and cpu and (self.deadline - self._time() >= self.data_size / bandwidth +
+                                      server_delay +
+                                      self.computation_required / cpu)
+
+    @property
+    def time_budget(self):
+        return self.deadline - self._time()
 
     @property
     def overdue(self):

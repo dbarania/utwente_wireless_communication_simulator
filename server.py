@@ -28,13 +28,14 @@ class Server:
         for t in self.computing_tasks:
             assert isinstance(t, Task)
             t.update_task()
+        self._handle_finished_tasks()
 
     def _handle_finished_tasks(self):
         self.computing_tasks = [t for t in self.computing_tasks
                                 if not t.status == TaskStatus.FINISHED and self._process_finished_tasks(t)]
 
     def _process_finished_tasks(self, task):
-        print(task)
+
         # TODO do some processing
         return True
 
