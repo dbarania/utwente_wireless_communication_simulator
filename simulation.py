@@ -66,6 +66,7 @@ class Simulation:
                 new_tasks = 0
                 while self._get_system_load() < self.target_system_load:
                     new_task = self.task_generator.new_task()
+                    self.statistics_manager.tasks_in_system.append(new_task)
                     self.iot_hub.add_new_task(new_task)
                     new_tasks += 1
 
@@ -73,7 +74,8 @@ class Simulation:
                 self.update_tasks()
                 self._update_statistics(new_tasks)
                 self._time += 1
-            self.statistics_manager.generate_logs(f'log_{str(self.algorithm_used).split(".")[1].lower()}_{iteration}.csv')
+            self.statistics_manager.generate_logs(
+                f'log_{str(self.algorithm_used).split(".")[1].lower()}_{iteration}.csv')
             self.reset_simulation()
 
     def manage_tasks(self):
@@ -188,13 +190,15 @@ class Simulation:
         cpu_usage_cloud = self.cloud_server.cpu_allocated
         privacy_edge = self.edge_server.sum_privacy()
         privacy_cloud = self.cloud_server.sum_privacy()
+        tasks_overdue = sum(t.overdue for t in self.statistics_manager.tasks_in_system)
         self.statistics_manager.state_of_system[self.sim_time()].update_statistics(new_tasks, tasks_transferring_edge,
                                                                                    tasks_transferring_cloud,
                                                                                    tasks_computing_edge,
                                                                                    tasks_computing_cloud,
                                                                                    bandwidth_usage, cpu_usage_edge,
                                                                                    cpu_usage_cloud, privacy_edge,
-                                                                                   privacy_cloud)
+                                                                                   privacy_cloud,
+                                                                                   tasks_overdue)
 
     def _get_system_load(self):
         assert isinstance(self.edge_server, Server)

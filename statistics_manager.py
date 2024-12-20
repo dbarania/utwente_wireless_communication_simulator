@@ -15,6 +15,7 @@ class SystemStateTimestamp:
         self.cpu_usage_cloud = None
         self.privacy_edge = None
         self.privacy_cloud = None
+        self.tasks_overdue = None
 
     def update_statistics(self, new_tasks,
                           tasks_transferring_edge,
@@ -25,7 +26,8 @@ class SystemStateTimestamp:
                           cpu_usage_edge,
                           cpu_usage_cloud,
                           privacy_edge,
-                          privacy_cloud):
+                          privacy_cloud,
+                          tasks_overdue):
         self.new_tasks = new_tasks
         self.tasks_transferring_edge = tasks_transferring_edge
         self.tasks_transferring_cloud = tasks_transferring_cloud
@@ -36,28 +38,31 @@ class SystemStateTimestamp:
         self.cpu_usage_cloud = cpu_usage_cloud
         self.privacy_edge = privacy_edge
         self.privacy_cloud = privacy_cloud
+        self.tasks_overdue = tasks_overdue
 
     def generate_header(self):
         a = self.__dict__.keys()
         return ','.join(a) + '\n'
 
     def generate_entry(self):
-        return (f'{self.timestamp},'
-                f' {self.new_tasks},'
-                f' {self.tasks_transferring_edge},'
-                f' {self.tasks_transferring_cloud},'
-                f' {self.tasks_computing_edge},'
-                f' {self.tasks_computing_cloud},'
-                f' {self.bandwidth_usage},'
-                f' {self.cpu_usage_edge},'
-                f' {self.cpu_usage_cloud},'
-                f' {self.privacy_edge},'
-                f' {self.privacy_cloud}'
-                f'\n')
+        return ','.join([str(self.__getattribute__(name)) for name in self.__dict__.keys()]) + '\n'
+        # return (f'{self.timestamp},'
+        #         f' {self.new_tasks},'
+        #         f' {self.tasks_transferring_edge},'
+        #         f' {self.tasks_transferring_cloud},'
+        #         f' {self.tasks_computing_edge},'
+        #         f' {self.tasks_computing_cloud},'
+        #         f' {self.bandwidth_usage},'
+        #         f' {self.cpu_usage_edge},'
+        #         f' {self.cpu_usage_cloud},'
+        #         f' {self.privacy_edge},'
+        #         f' {self.privacy_cloud}'
+        #         f'\n')
 
 
 class StatisticsManager:
     def __init__(self, num_iterations):
+        SystemStateTimestamp._timer = 0
         self.tasks_in_system = []
         self.finished_tasks = []
         self.simulation_to_track = None

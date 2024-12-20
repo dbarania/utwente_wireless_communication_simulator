@@ -15,6 +15,7 @@ edge = "edge"
 class Solver:
     def __init__(self, task_list: list[Task], bw_available, edge_cpu_available: int, cloud_cpu_available: int,
                  edge_delay: int, cloud_delay: int):
+        random.seed(3)
         self.task_list = task_list
         self.result_proposal = {t.id: {"bw": 0, "cpu": (0, 0), "server": None} for t in task_list}
         self.bw = bw_available
@@ -115,7 +116,7 @@ class Solver:
 
             fitness = [self._evaluate_individual(ind) for ind in population]
 
-            selected = random.choices(population, weights=[1 / (f+1) for f in fitness], k=pop_size)
+            selected = random.choices(population, weights=[1 / (f + 1) for f in fitness], k=pop_size)
 
             next_population = []
             for i in range(0, pop_size, 2):

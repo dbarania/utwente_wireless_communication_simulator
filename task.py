@@ -83,7 +83,7 @@ class Task:
 
     @property
     def overdue(self):
-        self._overdue = self._time() > self.deadline and self.status != TaskStatus.FINISHED
+        self._overdue = self._time() > self.deadline and self.status != TaskStatus.FINISHED or self._overdue
         return self._overdue
 
     @staticmethod

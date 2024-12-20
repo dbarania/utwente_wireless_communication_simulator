@@ -12,7 +12,9 @@ class Hub:
         self.undecided_tasks_list.append(task)
 
     def update(self):
+        self._clear_overdue()
         self._move_tasks_to_transferred()
+
         for t in self.transferred_tasks_list:
             assert isinstance(t, Task)
             t.update_task()
@@ -26,6 +28,9 @@ class Hub:
 
     def workload_remaining(self):
         return sum(t.computation_required for t in self.undecided_tasks_list)
+
+    def _clear_overdue(self):
+        self.undecided_tasks_list = [t for t in self.undecided_tasks_list if not t.overdue]
 
     def _move_tasks_to_transferred(self):
         for t in self.undecided_tasks_list:

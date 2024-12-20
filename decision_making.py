@@ -112,11 +112,19 @@ def cloud_everything_algorithm(time: int,
         all_operations = sum(t.computation_required for t in tasks_to_handle)
         fail = False
         for task in tasks_to_handle:
-            assert isinstance(task, Task)
-            avg_time_to_send = max(round(all_data / bw_available), 1)
+            if bw_available == 0:
+                fail = True
+                break
+            avg_time_to_send = max(math.ceil(all_data / bw_available), 1)
             bw_to_allocate = math.ceil(task.data_size / avg_time_to_send)
-            temp = (task.deadline - time) - cloud_delay - math.ceil(task.data_to_send / bw_to_allocate)
-            cpu_to_allocate = math.ceil(task.computation_required / temp)
+            time_to_send = math.ceil(task.data_size / bw_to_allocate)
+            if time_to_send != avg_time_to_send:
+                pass
+            time_to_compute_cloud = (task.time_budget - time_to_send - cloud_delay)
+            if time_to_compute_cloud <= 0:
+                fail = True
+                break
+            cpu_to_allocate = math.ceil(task.computation_required / time_to_compute_cloud)
 
             if (task.check_task_feasibility(bw_to_allocate, cloud_delay, cpu_to_allocate)
                     and bw_available >= bw_to_allocate and cpu_available >= cpu_to_allocate):
@@ -126,8 +134,6 @@ def cloud_everything_algorithm(time: int,
                 bw_available -= bw_to_allocate
                 all_data -= task.data_size
             else:
-
-                # raise ValueError("Something failed")
                 fail = True
                 break
         if fail:
