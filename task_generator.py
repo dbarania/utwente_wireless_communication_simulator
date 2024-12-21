@@ -1,7 +1,7 @@
 import random
 from task import Task
 
-SEED = 42
+SEED = 50
 
 
 class TaskGenerator:

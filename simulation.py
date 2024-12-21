@@ -76,6 +76,8 @@ class Simulation:
                 self._time += 1
             self.statistics_manager.generate_logs(
                 f'log_{str(self.algorithm_used).split(".")[1].lower()}_{iteration}.csv')
+            tasks_completed = len([t for t in self.statistics_manager.tasks_in_system if t.status == TaskStatus.FINISHED])
+            print(f'{str(self.algorithm_used).split(".")[1].lower()}_{iteration}: {tasks_completed}')
             self.reset_simulation()
 
     def manage_tasks(self):

@@ -38,7 +38,8 @@ class Task:
 
     def update_task(self):
         if self.overdue:
-            print(f"{self._time()}  {self.id} is overdue")
+            # print(f"{self._time()}  {self.id} is overdue")
+            pass
         if self.status == TaskStatus.WAITING:
             pass
         elif self.status == TaskStatus.SENDING:

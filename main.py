@@ -14,3 +14,4 @@ if __name__ == "__main__":
     sim_cloud = Simulation()
     sim_cloud.setup_simulation(config_file, DecisionMakingAlgorithm.EVERYTHING_CLOUD)
     sim_cloud.run()
+

@@ -133,8 +133,9 @@ class Solver:
         status = self.allocate_bw_and_propose_cpu()
         if status is None:
             return None
-        pop_size = 12
-        generations = 10
+        pop_size = int(round((20*len(self.task_list))**(1/2)))
+        pop_size += 1 if pop_size % 2 else 0
+        generations = 2*pop_size
         # self.allocate_bw_and_propose_cpu()
         initial_pop = self._initialize_population(pop_size)
         if initial_pop is None:
